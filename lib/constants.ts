@@ -28,3 +28,5 @@ export const PRICING = {
   pro_monthly: 49_000,    // Rp 49.000
   pro_yearly: 399_000,    // Rp 399.000
 } as const;
+
+export const INTERVIEW_TOTAL_QUESTIONS = 4;
