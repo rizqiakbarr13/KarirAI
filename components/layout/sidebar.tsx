@@ -9,6 +9,7 @@ import {
   MessagesSquare,
   Settings,
   Sparkles,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,8 +21,15 @@ const NAV_ITEMS = [
   { href: "/dashboard/settings", label: "Pengaturan", icon: Settings },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  isAdmin?: boolean;
+}
+
+export function Sidebar({ isAdmin = false }: SidebarProps) {
   const pathname = usePathname();
+  const navItems = isAdmin
+    ? [...NAV_ITEMS, { href: "/dashboard/admin", label: "Admin", icon: ShieldCheck }]
+    : NAV_ITEMS;
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-dark/10 bg-white md:flex">
@@ -32,7 +40,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 px-3">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const active =
             item.href === "/dashboard"
               ? pathname === "/dashboard"

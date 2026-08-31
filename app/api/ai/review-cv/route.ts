@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { reviewCV } from "@/lib/anthropic";
 import { checkUsageLimit, logUsage } from "@/lib/usage";
 import { cvDataSchema } from "@/lib/validations/resume";
+import { logAuditEvent } from "@/lib/audit";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const bodySchema = z.object({
@@ -18,6 +20,20 @@ export async function POST(request: NextRequest) {
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rateLimit = await checkRateLimit({
+    request,
+    userId: user.id,
+    action: "ai.review_cv",
+    limit: 10,
+    windowSeconds: 3600,
+  });
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Terlalu banyak permintaan review CV. Coba lagi nanti." },
+      { status: 429 }
+    );
   }
 
   const usage = await checkUsageLimit(supabase, user.id, "cv_review");
@@ -55,6 +71,12 @@ export async function POST(request: NextRequest) {
   }
 
   await logUsage(supabase, user.id, "cv_review");
+  await logAuditEvent({
+    userId: user.id,
+    action: "cv.reviewed",
+    metadata: { resumeId: parsed.data.resumeId, score: result.skor },
+    request,
+  });
 
   return NextResponse.json({ review: result });
 }

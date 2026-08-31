@@ -1,11 +1,12 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { Lightbulb } from "lucide-react";
+import { Lightbulb, ShieldCheck, ShieldAlert } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { ScoreCircle } from "@/components/ui/score-circle";
+import { getTemplateMeta } from "@/lib/cv-templates";
 import type { Resume } from "@/types";
 
 export const metadata: Metadata = { title: "Review CV" };
@@ -58,12 +59,28 @@ export default async function CVReviewPage({ params }: PageProps) {
   }
 
   const feedback = resume.ai_feedback;
+  const templateMeta = getTemplateMeta(resume.template);
+  const isAtsFriendly = templateMeta.category === "ats";
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center gap-8">
       <div className="flex flex-col items-center gap-4 text-center">
         <ScoreCircle score={feedback.skor} />
         <p className="max-w-md text-dark/70">{feedback.verdict}</p>
+        <div
+          className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${
+            isAtsFriendly ? "bg-green-50 text-green-600" : "bg-warm/15 text-warm"
+          }`}
+        >
+          {isAtsFriendly ? (
+            <ShieldCheck className="h-3.5 w-3.5" />
+          ) : (
+            <ShieldAlert className="h-3.5 w-3.5" />
+          )}
+          {isAtsFriendly
+            ? `Template "${templateMeta.label}" ramah ATS`
+            : `Template "${templateMeta.label}" bukan ATS-friendly — pertimbangkan ganti ke template ATS untuk lamaran online`}
+        </div>
       </div>
 
       <Card padding="lg" className="w-full">

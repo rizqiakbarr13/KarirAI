@@ -16,10 +16,10 @@ import { StepPendidikan } from "@/components/cv/steps/step-pendidikan";
 import { StepKeahlian } from "@/components/cv/steps/step-keahlian";
 import { normalizeCVData } from "@/lib/cv";
 import { PLAN_LIMITS } from "@/lib/constants";
+import { CV_TEMPLATES, CV_TEMPLATE_CATEGORIES } from "@/lib/cv-templates";
 import type { CVData, PlanType, Resume } from "@/types";
 
 const STEPS = ["Data Diri", "Ringkasan", "Pengalaman", "Pendidikan", "Keahlian"];
-const TEMPLATES: Resume["template"][] = ["minimalis", "modern", "profesional"];
 
 interface CVFormProps {
   resume: Resume;
@@ -204,26 +204,40 @@ export function CVForm({ resume, plan }: CVFormProps) {
             </div>
           </div>
 
-          <div className="mt-6 rounded-card border border-dark/10 bg-white p-6 shadow-card">
-            <p className="mb-3 text-sm font-semibold text-dark">Pilih Template</p>
-            <div className="grid grid-cols-3 gap-3">
-              {TEMPLATES.map((tpl) => (
-                <TemplateCard
-                  key={tpl}
-                  template={tpl}
-                  label={tpl}
-                  active={template === tpl}
-                  locked={!availableTemplates.includes(tpl)}
-                  onSelect={() => {
-                    if (!availableTemplates.includes(tpl)) {
-                      toast("Upgrade ke Pro untuk membuka template ini", "error");
-                      return;
-                    }
-                    setTemplate(tpl);
-                  }}
-                />
-              ))}
-            </div>
+          <div className="mt-6 flex flex-col gap-6 rounded-card border border-dark/10 bg-white p-6 shadow-card">
+            <p className="text-sm font-semibold text-dark">Pilih Template</p>
+            {CV_TEMPLATE_CATEGORIES.map((category) => {
+              const templatesInCategory = CV_TEMPLATES.filter(
+                (t) => t.category === category.value
+              );
+              return (
+                <div key={category.value}>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-dark/60">
+                    {category.label}
+                  </p>
+                  <p className="mt-1 text-xs text-dark/40">{category.helperText}</p>
+                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {templatesInCategory.map((tpl) => (
+                      <TemplateCard
+                        key={tpl.id}
+                        template={tpl.id}
+                        label={tpl.label}
+                        description={tpl.description}
+                        active={template === tpl.id}
+                        locked={!availableTemplates.includes(tpl.id)}
+                        onSelect={() => {
+                          if (!availableTemplates.includes(tpl.id)) {
+                            toast("Upgrade ke Pro untuk membuka template ini", "error");
+                            return;
+                          }
+                          setTemplate(tpl.id);
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 

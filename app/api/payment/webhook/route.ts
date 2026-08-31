@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PRICING } from "@/lib/constants";
+import { logAuditEvent } from "@/lib/audit";
 
 const notificationSchema = z.object({
   order_id: z.string(),
@@ -75,6 +76,13 @@ export async function POST(request: NextRequest) {
       .from("profiles")
       .update({ plan: "pro", plan_expires_at: expiresAt.toISOString() })
       .eq("id", subscription.user_id);
+
+    await logAuditEvent({
+      userId: subscription.user_id,
+      action: "payment.activated",
+      metadata: { orderId: order_id, expiresAt: expiresAt.toISOString() },
+      request,
+    });
   } else if (transaction_status === "expire" || transaction_status === "cancel") {
     await admin
       .from("subscriptions")
@@ -93,6 +101,13 @@ export async function POST(request: NextRequest) {
         .update({ plan: "free", plan_expires_at: null })
         .eq("id", subscription.user_id);
     }
+
+    await logAuditEvent({
+      userId: subscription.user_id,
+      action: "payment.expired_or_cancelled",
+      metadata: { orderId: order_id, transactionStatus: transaction_status },
+      request,
+    });
   }
 
   return NextResponse.json({ success: true }, { status: 200 });
