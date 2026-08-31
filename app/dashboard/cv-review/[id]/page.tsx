@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { Lightbulb } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -6,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { ScoreCircle } from "@/components/ui/score-circle";
 import type { Resume } from "@/types";
+
+export const metadata: Metadata = { title: "Review CV" };
 
 interface PageProps {
   params: { id: string };

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PLAN_LIMITS } from "@/lib/constants";
@@ -6,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { emptyCVData } from "@/lib/cv";
 import type { PlanType } from "@/types";
+
+export const metadata: Metadata = { title: "CV Builder" };
 
 export default async function NewCVBuilderPage() {
   const supabase = createClient();

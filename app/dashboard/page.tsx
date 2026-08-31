@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PLAN_LIMITS } from "@/lib/constants";
@@ -6,6 +7,8 @@ import { QuotaCard } from "@/components/dashboard/quota-card";
 import { ToolCards } from "@/components/dashboard/tool-cards";
 import { RecentActivity, type ActivityItem } from "@/components/dashboard/recent-activity";
 import type { Profile } from "@/types";
+
+export const metadata: Metadata = { title: "Dashboard" };
 
 const FEATURE_LABELS = {
   cv_review: "Review CV",

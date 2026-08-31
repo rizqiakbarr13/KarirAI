@@ -10,13 +10,31 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   weight: ["400", "500", "600", "700", "800"],
 });
 
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+const title = "KarirAI — CV & Karier dengan AI";
+const description =
+  "KarirAI membantu kamu membuat CV yang lolos ATS, surat lamaran, dan simulasi interview dengan bantuan AI. Dibuat khusus untuk pencari kerja Indonesia.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(baseUrl),
   title: {
-    default: "KarirAI — CV & Karier dengan AI",
+    default: title,
     template: "%s | KarirAI",
   },
-  description:
-    "KarirAI membantu kamu membuat CV yang lolos ATS, surat lamaran, dan simulasi interview dengan bantuan AI. Dibuat khusus untuk pencari kerja Indonesia.",
+  description,
+  openGraph: {
+    title,
+    description,
+    url: baseUrl,
+    siteName: "KarirAI",
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+  },
 };
 
 export default function RootLayout({
