@@ -3,6 +3,8 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { interviewTurn } from "@/lib/anthropic";
 import { checkUsageLimit, logUsage } from "@/lib/usage";
+import { logAuditEvent } from "@/lib/audit";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { INTERVIEW_TOTAL_QUESTIONS as TOTAL_QUESTIONS } from "@/lib/constants";
 import type { InterviewMessage, InterviewSession } from "@/types";
 
@@ -61,6 +63,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const rateLimit = await checkRateLimit({
+      request,
+      userId: user.id,
+      action: "ai.interview_start",
+      limit: 20,
+      windowSeconds: 3600,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Terlalu banyak percobaan memulai interview. Coba lagi nanti." },
+        { status: 429 }
+      );
+    }
+
     let aiMessage: string;
     try {
       aiMessage = await interviewTurn(position, [], 1, TOTAL_QUESTIONS);
@@ -83,6 +99,12 @@ export async function POST(request: NextRequest) {
     }
 
     await logUsage(supabase, user.id, "interview");
+    await logAuditEvent({
+      userId: user.id,
+      action: "interview.started",
+      metadata: { sessionId: session.id, position },
+      request,
+    });
 
     return NextResponse.json({ sessionId: session.id, aiMessage });
   }
@@ -141,6 +163,15 @@ export async function POST(request: NextRequest) {
 
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 500 });
+  }
+
+  if (isComplete) {
+    await logAuditEvent({
+      userId: user.id,
+      action: "interview.completed",
+      metadata: { sessionId, finalScore },
+      request,
+    });
   }
 
   return NextResponse.json({ aiMessage, isComplete, finalScore });

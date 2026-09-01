@@ -3,6 +3,8 @@ import puppeteer from "puppeteer";
 import { createClient } from "@/lib/supabase/server";
 import { renderCVHtml } from "@/lib/pdf-templates";
 import { normalizeCVData } from "@/lib/cv";
+import { logAuditEvent } from "@/lib/audit";
+import { checkRateLimit } from "@/lib/rate-limit";
 import type { Resume } from "@/types";
 
 interface RouteParams {
@@ -43,7 +45,7 @@ function buildHtmlDocument(markup: string) {
 </html>`;
 }
 
-export async function POST(_request: NextRequest, { params }: RouteParams) {
+export async function POST(request: NextRequest, { params }: RouteParams) {
   const supabase = createClient();
   const {
     data: { user },
@@ -51,6 +53,20 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rateLimit = await checkRateLimit({
+    request,
+    userId: user.id,
+    action: "cv.export",
+    limit: 10,
+    windowSeconds: 3600,
+  });
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Terlalu banyak percobaan export PDF. Coba lagi nanti." },
+      { status: 429 }
+    );
   }
 
   const { data: resume } = await supabase
@@ -77,6 +93,13 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "load" });
     const pdfBuffer = await page.pdf({ format: "A4", printBackground: true });
+
+    await logAuditEvent({
+      userId: user.id,
+      action: "cv.exported",
+      metadata: { resumeId: resume.id, template: resume.template },
+      request,
+    });
 
     return new NextResponse(Buffer.from(pdfBuffer), {
       headers: {

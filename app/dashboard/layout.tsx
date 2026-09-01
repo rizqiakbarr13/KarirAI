@@ -27,7 +27,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-sand">
-      <Sidebar />
+      <Sidebar isAdmin={profile?.is_admin ?? false} />
       <div className="flex min-h-screen flex-1 flex-col pb-16 md:pb-0">
         <DashboardNavbar
           name={profile?.name ?? user.email ?? "Pengguna"}

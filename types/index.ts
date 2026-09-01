@@ -85,5 +85,31 @@ export interface Profile {
   email: string;
   plan: PlanType;
   plan_expires_at: string | null;
+  is_admin: boolean;
+  created_at: string;
+}
+
+export type AuditAction =
+  | 'auth.login'
+  | 'auth.logout'
+  | 'cv.deleted'
+  | 'cv.exported'
+  | 'cv.reviewed'
+  | 'cover_letter.generated'
+  | 'interview.started'
+  | 'interview.completed'
+  | 'payment.created'
+  | 'payment.activated'
+  | 'payment.expired_or_cancelled'
+  | 'rate_limit.exceeded'
+  | 'admin.access';
+
+export interface AuditLog {
+  id: string;
+  user_id: string | null;
+  action: AuditAction;
+  metadata: Record<string, unknown>;
+  ip_address: string | null;
+  user_agent: string | null;
   created_at: string;
 }

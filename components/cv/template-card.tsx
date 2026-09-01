@@ -5,6 +5,7 @@ import type { Resume } from "@/types";
 interface TemplateCardProps {
   template: Resume["template"];
   label: string;
+  description?: string;
   active: boolean;
   locked?: boolean;
   onSelect: () => void;
@@ -16,7 +17,14 @@ const PREVIEW_STYLES: Record<Resume["template"], string> = {
   profesional: "bg-neutral-100",
 };
 
-export function TemplateCard({ template, label, active, locked, onSelect }: TemplateCardProps) {
+export function TemplateCard({
+  template,
+  label,
+  description,
+  active,
+  locked,
+  onSelect,
+}: TemplateCardProps) {
   return (
     <button
       type="button"
@@ -39,6 +47,9 @@ export function TemplateCard({ template, label, active, locked, onSelect }: Temp
         <span className="text-xs font-medium capitalize text-dark">{label}</span>
         {active && <Check className="h-3.5 w-3.5 text-indigo" />}
       </div>
+      {description && (
+        <p className="px-1 text-[11px] leading-snug text-dark/50">{description}</p>
+      )}
     </button>
   );
 }

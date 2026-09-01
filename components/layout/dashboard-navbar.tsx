@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
-import { useSupabase } from "@/components/providers/supabase-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { PlanType } from "@/types";
@@ -13,11 +12,10 @@ interface DashboardNavbarProps {
 }
 
 export function DashboardNavbar({ name, plan }: DashboardNavbarProps) {
-  const { supabase } = useSupabase();
   const router = useRouter();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
     router.refresh();
   };

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { updateResumeSchema } from "@/lib/validations/resume";
+import { logAuditEvent } from "@/lib/audit";
 
 interface RouteParams {
   params: { id: string };
@@ -63,7 +64,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   return NextResponse.json({ resume: data });
 }
 
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const supabase = createClient();
   const {
     data: { user },
@@ -78,6 +79,13 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  await logAuditEvent({
+    userId: user.id,
+    action: "cv.deleted",
+    metadata: { resumeId: params.id },
+    request,
+  });
 
   return NextResponse.json({ success: true });
 }
