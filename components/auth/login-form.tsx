@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Mail } from "lucide-react";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { useToast } from "@/components/ui/toast";
@@ -10,15 +10,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { GoogleIcon } from "@/components/ui/google-icon";
+import { cn } from "@/lib/utils";
+
+type LoginMode = "password" | "magic-link";
 
 export function LoginForm() {
   const { supabase } = useSupabase();
   const { toast } = useToast();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") ?? "/dashboard";
 
+  const [mode, setMode] = useState<LoginMode>("password");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loadingGoogle, setLoadingGoogle] = useState(false);
+  const [loadingPassword, setLoadingPassword] = useState(false);
   const [loadingMagicLink, setLoadingMagicLink] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
 
@@ -38,6 +45,20 @@ export function LoginForm() {
       toast(error.message, "error");
       setLoadingGoogle(false);
     }
+  };
+
+  const handlePasswordLogin = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoadingPassword(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      toast(error.message, "error");
+      setLoadingPassword(false);
+      return;
+    }
+    await fetch("/api/auth/login-audit", { method: "POST" });
+    router.push(redirectTo);
+    router.refresh();
   };
 
   const handleMagicLink = async (e: FormEvent) => {
@@ -81,7 +102,52 @@ export function LoginForm() {
         <div className="h-px flex-1 bg-dark/10" />
       </div>
 
-      {magicLinkSent ? (
+      <div className="mb-4 flex rounded-control bg-sand p-1 text-sm font-medium">
+        <button
+          type="button"
+          onClick={() => setMode("password")}
+          className={cn(
+            "flex-1 rounded-control py-1.5 transition-colors",
+            mode === "password" ? "bg-white text-dark shadow-card" : "text-dark/50"
+          )}
+        >
+          Password
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("magic-link")}
+          className={cn(
+            "flex-1 rounded-control py-1.5 transition-colors",
+            mode === "magic-link" ? "bg-white text-dark shadow-card" : "text-dark/50"
+          )}
+        >
+          Magic Link
+        </button>
+      </div>
+
+      {mode === "password" ? (
+        <form onSubmit={handlePasswordLogin} className="flex flex-col gap-4">
+          <Input
+            type="email"
+            label="Email"
+            placeholder="nama@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <Input
+            type="password"
+            label="Password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <Button type="submit" className="w-full" disabled={loadingPassword}>
+            {loadingPassword ? "Masuk..." : "Masuk"}
+          </Button>
+        </form>
+      ) : magicLinkSent ? (
         <div className="flex flex-col items-center gap-2 rounded-control bg-indigo/5 px-4 py-6 text-center">
           <Mail className="h-6 w-6 text-indigo" />
           <p className="text-sm text-dark">
